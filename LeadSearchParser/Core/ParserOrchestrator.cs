@@ -9,7 +9,6 @@ public class ParserOrchestrator
 {
     private readonly ParserConfig _config;
     private readonly Logger _logger;
-    private readonly YandexSearchEngine _searchEngine;
     private readonly DataExporter _exporter;
 
     private int _processedCount = 0;
@@ -23,7 +22,6 @@ public class ParserOrchestrator
     {
         _config = config;
         _logger = logger;
-        _searchEngine = new YandexSearchEngine(_config.Parser.UserAgent);
         _exporter = new DataExporter();
     }
 
@@ -56,7 +54,7 @@ public class ParserOrchestrator
         return results.OrderBy(r => r.Number).ToList();
     }
 
-    public async Task<List<SiteData>> RunAsync(string query, int resultsCount, int depth)
+    public async Task<List<SiteData>> RunAsync(string query, int resultsCount, int depth, string? searchEngine = null)
     {
         var stopwatch = Stopwatch.StartNew();
         
@@ -64,17 +62,41 @@ public class ParserOrchestrator
         _logger.Info($"Настройки: результатов={resultsCount}, глубина={depth}, задержка={_config.Parser.Delay}сек");
         Console.WriteLine();
 
-        // Step 1: Search Yandex
-        _logger.Info("Поиск в Яндексе...");
-        var urls = await _searchEngine.SearchAsync(query, resultsCount);
+        // Выбор поискового движка
+        var engine = searchEngine ?? _config.Search.Engine;
+        List<string> urls;
+
+        if (_config.Search.UseSelenium || engine.ToLower() == "selenium")
+        {
+            _logger.Info("Поиск через Selenium (браузер)...");
+            using var seleniumEngine = new SeleniumSearchEngine(headless: true);
+            urls = await seleniumEngine.SearchYandexAsync(query, resultsCount);
+        }
+        else if (engine.ToLower() == "google")
+        {
+            _logger.Info("Поиск в Google...");
+            var googleEngine = new GoogleSearchEngine(_config.Parser.UserAgent);
+            urls = await googleEngine.SearchAsync(query, resultsCount);
+            googleEngine.Dispose();
+        }
+        else
+        {
+            _logger.Info("Поиск в Яндексе...");
+            var yandexEngine = new YandexSearchEngine(_config.Parser.UserAgent);
+            urls = await yandexEngine.SearchAsync(query, resultsCount);
+            yandexEngine.Dispose();
+        }
+
         _logger.Success($"Найдено URL: {urls.Count}");
         Console.WriteLine();
 
         if (!urls.Any())
         {
             _logger.Warning("Не найдено результатов поиска");
-            _logger.Info("РЕШЕНИЕ: Используйте файл urls.txt с прямыми ссылками на сайты");
-            _logger.Info("Пример: LeadSearchParser.exe --urls urls.txt");
+            _logger.Info("РЕШЕНИЯ:");
+            _logger.Info("1. Используйте --selenium для автоматического браузера");
+            _logger.Info("2. Используйте --google для поиска в Google");
+            _logger.Info("3. Используйте файл urls.txt: LeadSearchParser.exe --urls urls.txt");
             return new List<SiteData>();
         }
 

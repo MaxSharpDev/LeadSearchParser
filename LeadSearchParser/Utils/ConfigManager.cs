@@ -72,6 +72,12 @@ public class ConfigManager
                 OutputFolder = "Results",
                 FilenameTemplate = "results_{date}_{query}"
             },
+            Cleanup = new CleanupSettings
+            {
+                Enabled = true,
+                KeepDays = 1,
+                AutoCleanup = true
+            },
             Logging = new LoggingSettings
             {
                 Enabled = true,

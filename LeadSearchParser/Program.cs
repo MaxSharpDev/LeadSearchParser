@@ -33,6 +33,40 @@ class Program
             Console.WriteLine();
             ConsoleHelper.WriteHeader();
 
+            // Обработка специальных команд
+            var cleanupManager = new FileCleanupManager(config.Export.OutputFolder, config.Cleanup.KeepDays, logger);
+
+            if (options.ShowStorage)
+            {
+                cleanupManager.ShowStorageInfo();
+                return 0;
+            }
+
+            if (options.CleanupAll)
+            {
+                logger.Warning("Удаление ВСЕХ файлов из папки результатов...");
+                cleanupManager.CleanupAllFiles();
+                return 0;
+            }
+
+            if (options.Cleanup)
+            {
+                logger.Info("Очистка старых файлов...");
+                cleanupManager.CleanupOldFiles();
+                return 0;
+            }
+
+            // Автоматическая очистка при запуске (если включена)
+            if (config.Cleanup.Enabled && config.Cleanup.AutoCleanup)
+            {
+                if (cleanupManager.ShouldAutoCleanup())
+                {
+                    logger.Info($"Автоматическая очистка файлов старше {config.Cleanup.KeepDays} дн...");
+                    cleanupManager.CleanupOldFiles();
+                    Console.WriteLine();
+                }
+            }
+
             // Handle interactive mode or query from arguments
             string query;
             int resultsCount;
@@ -136,6 +170,19 @@ class Program
                 return 1;
             }
 
+            // Determine search engine
+            string? searchEngine = null;
+            if (options.UseSelenium)
+            {
+                searchEngine = "selenium";
+                logger.Info("Режим: Selenium (автоматический браузер)");
+            }
+            else if (options.UseGoogle)
+            {
+                searchEngine = "google";
+                logger.Info("Режим: Google Search");
+            }
+
             // Process each query
             foreach (var currentQuery in queries)
             {
@@ -146,7 +193,7 @@ class Program
                 }
 
                 var orchestrator = new ParserOrchestrator(config, logger);
-                var results = await orchestrator.RunAsync(currentQuery, resultsCount, depth);
+                var results = await orchestrator.RunAsync(currentQuery, resultsCount, depth, searchEngine);
 
                 if (results.Any())
                 {
@@ -230,8 +277,25 @@ class Program
                     break;
 
                 case "--google":
-                    options.GoogleSheets = true;
-                    options.Format = "csv"; // Auto-set CSV format for Google Sheets
+                    if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                    {
+                        // If next argument is not a flag, old behavior (Google Sheets)
+                        options.GoogleSheets = true;
+                        options.Format = "csv";
+                    }
+                    else
+                    {
+                        // New behavior: Google search
+                        options.UseGoogle = true;
+                    }
+                    break;
+
+                case "--google-search":
+                    options.UseGoogle = true;
+                    break;
+
+                case "--selenium":
+                    options.UseSelenium = true;
                     break;
 
                 case "--threads":
@@ -250,6 +314,19 @@ class Program
                 case "-v":
                 case "--verbose":
                     options.Verbose = true;
+                    break;
+
+                case "--cleanup":
+                    options.Cleanup = true;
+                    break;
+
+                case "--cleanup-all":
+                    options.CleanupAll = true;
+                    break;
+
+                case "--storage-info":
+                case "--info":
+                    options.ShowStorage = true;
                     break;
 
                 case "-h":
@@ -279,19 +356,27 @@ class Program
         Console.WriteLine("  --timeout <число>            Таймаут загрузки страницы в секундах (по умолчанию: 30)");
         Console.WriteLine("  -o, --output <файл>          Имя выходного файла");
         Console.WriteLine("  --format <xlsx|csv|json>     Формат вывода (по умолчанию: xlsx)");
-        Console.WriteLine("  --google                     Экспорт в CSV для Google Sheets (с инструкцией)");
+        Console.WriteLine("  --google                     Экспорт в CSV для Google Sheets");
+        Console.WriteLine("  --google-search              Использовать Google для поиска вместо Яндекса");
+        Console.WriteLine("  --selenium                   Использовать браузер (обход капчи, НАДЕЖНО!)");
         Console.WriteLine("  --threads <число>            Количество потоков (по умолчанию: 3)");
         Console.WriteLine("  --config <файл>              Файл конфигурации (по умолчанию: config.json)");
         Console.WriteLine("  --log <файл>                 Файл лога");
         Console.WriteLine("  -v, --verbose                Подробный вывод");
         Console.WriteLine("  -h, --help                   Показать справку");
         Console.WriteLine();
+        Console.WriteLine("Управление файлами:");
+        Console.WriteLine("  --cleanup                    Удалить старые файлы (>1 дня)");
+        Console.WriteLine("  --cleanup-all                Удалить ВСЕ файлы результатов");
+        Console.WriteLine("  --storage-info, --info       Показать информацию о хранилище");
+        Console.WriteLine();
         Console.WriteLine("Примеры:");
         Console.WriteLine("  LeadSearchParser.exe");
         Console.WriteLine("  LeadSearchParser.exe -q \"стеклянные перегородки\" -r 50");
-        Console.WriteLine("  LeadSearchParser.exe -f queries.txt -o results.xlsx");
+        Console.WriteLine("  LeadSearchParser.exe -q \"окна\" --selenium         (с браузером, без капчи!)");
+        Console.WriteLine("  LeadSearchParser.exe -q \"мебель\" --google-search  (поиск в Google)");
         Console.WriteLine("  LeadSearchParser.exe --urls urls.txt -d 3");
-        Console.WriteLine("  LeadSearchParser.exe -q \"окна пвх\" --google  (для Google Sheets)");
+        Console.WriteLine("  LeadSearchParser.exe -f queries.txt -o results.xlsx");
     }
 }
 
@@ -307,9 +392,14 @@ class CommandLineOptions
     public string? OutputFile { get; set; }
     public string? Format { get; set; }
     public bool GoogleSheets { get; set; }
+    public bool UseSelenium { get; set; }
+    public bool UseGoogle { get; set; }
     public int Threads { get; set; }
     public string? ConfigFile { get; set; }
     public string? LogFile { get; set; }
     public bool Verbose { get; set; }
+    public bool Cleanup { get; set; }
+    public bool CleanupAll { get; set; }
+    public bool ShowStorage { get; set; }
 }
 

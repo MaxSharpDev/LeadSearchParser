@@ -2,7 +2,9 @@
   "search": {
     "defaultResults": 30,
     "defaultDepth": 2,
-    "maxDepth": 5
+    "maxDepth": 5,
+    "engine": "yandex",
+    "useSelenium": false
   },
   "parser": {
     "timeout": 30,
@@ -39,6 +41,11 @@
     "defaultFormat": "xlsx",
     "outputFolder": "CSV",
     "filenameTemplate": "results_{date}_{query}"
+  },
+  "cleanup": {
+    "enabled": true,
+    "keepDays": 1,
+    "autoCleanup": true
   },
   "logging": {
     "enabled": true,

@@ -7,6 +7,7 @@ public class ParserConfig
     public ExtractorSettings Extractor { get; set; } = new();
     public SocialSettings Social { get; set; } = new();
     public ExportSettings Export { get; set; } = new();
+    public CleanupSettings Cleanup { get; set; } = new();
     public LoggingSettings Logging { get; set; } = new();
 }
 
@@ -15,6 +16,8 @@ public class SearchConfig
     public int DefaultResults { get; set; } = 30;
     public int DefaultDepth { get; set; } = 2;
     public int MaxDepth { get; set; } = 5;
+    public string Engine { get; set; } = "yandex"; // yandex, google, selenium
+    public bool UseSelenium { get; set; } = false;
 }
 
 public class ParserSettings
@@ -53,6 +56,13 @@ public class ExportSettings
     public string DefaultFormat { get; set; } = "xlsx";
     public string OutputFolder { get; set; } = "Results";
     public string FilenameTemplate { get; set; } = "results_{date}_{query}";
+}
+
+public class CleanupSettings
+{
+    public bool Enabled { get; set; } = true;
+    public int KeepDays { get; set; } = 1;
+    public bool AutoCleanup { get; set; } = true;
 }
 
 public class LoggingSettings
