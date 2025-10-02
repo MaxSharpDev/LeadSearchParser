@@ -1,0 +1,50 @@
+{
+  "search": {
+    "defaultResults": 30,
+    "defaultDepth": 2,
+    "maxDepth": 5
+  },
+  "parser": {
+    "timeout": 30,
+    "delay": 2,
+    "threads": 3,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "followRobotsTxt": false
+  },
+  "extractor": {
+    "emailPattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+    "phonePatterns": [
+      "\\+7\\s?\\(?\\d{3}\\)?\\s?\\d{3}-?\\d{2}-?\\d{2}",
+      "8\\s?\\(?\\d{3}\\)?\\s?\\d{3}-?\\d{2}-?\\d{2}"
+    ],
+    "contactPages": [
+      "контакты",
+      "contact",
+      "contacts",
+      "о-нас",
+      "about",
+      "o-nas"
+    ]
+  },
+  "social": {
+    "vk": "vk.com",
+    "telegram": "t.me|telegram.me",
+    "whatsapp": "wa.me|api.whatsapp.com",
+    "instagram": "instagram.com",
+    "facebook": "facebook.com",
+    "ok": "ok.ru",
+    "youtube": "youtube.com"
+  },
+  "export": {
+    "defaultFormat": "xlsx",
+    "outputFolder": "Results",
+    "filenameTemplate": "results_{date}_{query}"
+  },
+  "logging": {
+    "enabled": true,
+    "level": "Info",
+    "file": "Logs/parser.log"
+  }
+}
+
+
