@@ -26,16 +26,11 @@ public class ExcelExporter
             worksheet.Cell(1, 5).Value = "Телефон";
             worksheet.Cell(1, 6).Value = "VK";
             worksheet.Cell(1, 7).Value = "Telegram";
-            worksheet.Cell(1, 8).Value = "WhatsApp";
-            worksheet.Cell(1, 9).Value = "Instagram";
-            worksheet.Cell(1, 10).Value = "Facebook";
-            worksheet.Cell(1, 11).Value = "OK";
-            worksheet.Cell(1, 12).Value = "YouTube";
-            worksheet.Cell(1, 13).Value = "Дата парсинга";
-            worksheet.Cell(1, 14).Value = "Статус";
+            worksheet.Cell(1, 8).Value = "Дата парсинга";
+            worksheet.Cell(1, 9).Value = "Статус";
 
             // Style headers
-            var headerRange = worksheet.Range(1, 1, 1, 14);
+            var headerRange = worksheet.Range(1, 1, 1, 9);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -51,22 +46,17 @@ public class ExcelExporter
                 worksheet.Cell(row, 5).Value = string.Join("; ", site.Phones);
                 worksheet.Cell(row, 6).Value = site.VK;
                 worksheet.Cell(row, 7).Value = site.Telegram;
-                worksheet.Cell(row, 8).Value = site.WhatsApp;
-                worksheet.Cell(row, 9).Value = site.Instagram;
-                worksheet.Cell(row, 10).Value = site.Facebook;
-                worksheet.Cell(row, 11).Value = site.OK;
-                worksheet.Cell(row, 12).Value = site.YouTube;
-                worksheet.Cell(row, 13).Value = site.ParseDate.ToString("dd.MM.yyyy HH:mm:ss");
-                worksheet.Cell(row, 14).Value = site.IsSuccess ? "OK" : $"Ошибка: {site.ErrorMessage}";
+                worksheet.Cell(row, 8).Value = site.ParseDate.ToString("dd.MM.yyyy HH:mm:ss");
+                worksheet.Cell(row, 9).Value = site.IsSuccess ? "OK" : $"Ошибка: {site.ErrorMessage}";
 
                 // Color code status
                 if (!site.IsSuccess)
                 {
-                    worksheet.Cell(row, 14).Style.Font.FontColor = XLColor.Red;
+                    worksheet.Cell(row, 9).Style.Font.FontColor = XLColor.Red;
                 }
                 else if (site.Emails.Any() || site.Phones.Any())
                 {
-                    worksheet.Cell(row, 14).Style.Font.FontColor = XLColor.Green;
+                    worksheet.Cell(row, 9).Style.Font.FontColor = XLColor.Green;
                 }
 
                 row++;

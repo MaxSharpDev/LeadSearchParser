@@ -18,7 +18,7 @@ public class CsvExporter
             var csv = new StringBuilder();
 
             // Headers
-            csv.AppendLine("№;Название сайта;URL;Email (все);Телефон;VK;Telegram;WhatsApp;Instagram;Facebook;OK;YouTube;Дата парсинга;Статус");
+            csv.AppendLine("№;Название сайта;URL;Email (все);Телефон;VK;Telegram;Дата парсинга;Статус");
 
             // Data
             foreach (var site in data)
@@ -31,11 +31,6 @@ public class CsvExporter
                     EscapeCsv(string.Join(", ", site.Phones)),
                     EscapeCsv(site.VK),
                     EscapeCsv(site.Telegram),
-                    EscapeCsv(site.WhatsApp),
-                    EscapeCsv(site.Instagram),
-                    EscapeCsv(site.Facebook),
-                    EscapeCsv(site.OK),
-                    EscapeCsv(site.YouTube),
                     site.ParseDate.ToString("dd.MM.yyyy HH:mm:ss"),
                     site.IsSuccess ? "OK" : $"Ошибка: {site.ErrorMessage}"
                 );

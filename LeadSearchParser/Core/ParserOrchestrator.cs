@@ -184,11 +184,6 @@ public class ParserOrchestrator
 
             siteData.VK = socialMedia.GetValueOrDefault("VK", string.Empty);
             siteData.Telegram = socialMedia.GetValueOrDefault("Telegram", string.Empty);
-            siteData.WhatsApp = socialMedia.GetValueOrDefault("WhatsApp", string.Empty);
-            siteData.Instagram = socialMedia.GetValueOrDefault("Instagram", string.Empty);
-            siteData.Facebook = socialMedia.GetValueOrDefault("Facebook", string.Empty);
-            siteData.OK = socialMedia.GetValueOrDefault("OK", string.Empty);
-            siteData.YouTube = socialMedia.GetValueOrDefault("YouTube", string.Empty);
 
             siteData.IsSuccess = true;
             webParser.Dispose();
@@ -207,11 +202,6 @@ public class ParserOrchestrator
         int count = 0;
         if (!string.IsNullOrWhiteSpace(site.VK)) count++;
         if (!string.IsNullOrWhiteSpace(site.Telegram)) count++;
-        if (!string.IsNullOrWhiteSpace(site.WhatsApp)) count++;
-        if (!string.IsNullOrWhiteSpace(site.Instagram)) count++;
-        if (!string.IsNullOrWhiteSpace(site.Facebook)) count++;
-        if (!string.IsNullOrWhiteSpace(site.OK)) count++;
-        if (!string.IsNullOrWhiteSpace(site.YouTube)) count++;
         return count;
     }
 

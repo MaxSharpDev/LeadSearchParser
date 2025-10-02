@@ -9,11 +9,6 @@ public class SiteData
     public List<string> Phones { get; set; } = new();
     public string VK { get; set; } = string.Empty;
     public string Telegram { get; set; } = string.Empty;
-    public string WhatsApp { get; set; } = string.Empty;
-    public string Instagram { get; set; } = string.Empty;
-    public string Facebook { get; set; } = string.Empty;
-    public string OK { get; set; } = string.Empty;
-    public string YouTube { get; set; } = string.Empty;
     public DateTime ParseDate { get; set; } = DateTime.Now;
     public bool IsSuccess { get; set; } = true;
     public string ErrorMessage { get; set; } = string.Empty;
