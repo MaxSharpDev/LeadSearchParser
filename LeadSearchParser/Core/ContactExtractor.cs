@@ -83,18 +83,15 @@ public class ContactExtractor
     {
         try
         {
+            var title = "";
+
             // Try title tag
             var titleNode = doc.DocumentNode.SelectSingleNode("//title");
             if (titleNode != null && !string.IsNullOrWhiteSpace(titleNode.InnerText))
             {
-                return CleanText(titleNode.InnerText);
-            }
-
-            // Try h1
-            var h1Node = doc.DocumentNode.SelectSingleNode("//h1");
-            if (h1Node != null && !string.IsNullOrWhiteSpace(h1Node.InnerText))
-            {
-                return CleanText(h1Node.InnerText);
+                title = CleanText(titleNode.InnerText);
+                if (IsValidTitle(title))
+                    return title;
             }
 
             // Try meta og:title
@@ -104,16 +101,73 @@ public class ContactExtractor
                 var content = ogTitleNode.GetAttributeValue("content", "");
                 if (!string.IsNullOrWhiteSpace(content))
                 {
-                    return CleanText(content);
+                    title = CleanText(content);
+                    if (IsValidTitle(title))
+                        return title;
                 }
             }
 
-            return "Без названия";
+            // Try h1
+            var h1Node = doc.DocumentNode.SelectSingleNode("//h1");
+            if (h1Node != null && !string.IsNullOrWhiteSpace(h1Node.InnerText))
+            {
+                title = CleanText(h1Node.InnerText);
+                if (IsValidTitle(title))
+                    return title;
+            }
+
+            // Try meta description as fallback
+            var descNode = doc.DocumentNode.SelectSingleNode("//meta[@name='description']");
+            if (descNode != null)
+            {
+                var content = descNode.GetAttributeValue("content", "");
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    title = CleanText(content);
+                    if (title.Length > 10 && title.Length < 100)
+                        return title;
+                }
+            }
+
+            return string.IsNullOrWhiteSpace(title) ? "Без названия" : title;
         }
         catch
         {
             return "Без названия";
         }
+    }
+
+    private bool IsValidTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            return false;
+
+        // Фильтруем подозрительные заголовки
+        var lowerTitle = title.ToLower();
+        var invalidTitles = new[] 
+        { 
+            "вы не робот", 
+            "you are not a robot",
+            "404", 
+            "403", 
+            "error", 
+            "ошибка",
+            "access denied",
+            "доступ запрещен",
+            "loading",
+            "загрузка",
+            "captcha",
+            "капча"
+        };
+
+        if (invalidTitles.Any(invalid => lowerTitle.Contains(invalid)))
+            return false;
+
+        // Минимальная длина
+        if (title.Length < 3)
+            return false;
+
+        return true;
     }
 
     private string CleanText(string text)

@@ -42,8 +42,19 @@ public class ExcelExporter
                 worksheet.Cell(row, 1).Value = site.Number;
                 worksheet.Cell(row, 2).Value = site.Title;
                 worksheet.Cell(row, 3).Value = site.Url;
-                worksheet.Cell(row, 4).Value = string.Join("; ", site.Emails);
-                worksheet.Cell(row, 5).Value = string.Join("; ", site.Phones);
+                
+                // Email в столбик (с переносом строки)
+                var emailCell = worksheet.Cell(row, 4);
+                emailCell.Value = string.Join(Environment.NewLine, site.Emails);
+                emailCell.Style.Alignment.WrapText = true;
+                emailCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                
+                // Телефоны в столбик (с переносом строки)
+                var phoneCell = worksheet.Cell(row, 5);
+                phoneCell.Value = string.Join(Environment.NewLine, site.Phones);
+                phoneCell.Style.Alignment.WrapText = true;
+                phoneCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                
                 worksheet.Cell(row, 6).Value = site.VK;
                 worksheet.Cell(row, 7).Value = site.Telegram;
                 worksheet.Cell(row, 8).Value = site.ParseDate.ToString("dd.MM.yyyy HH:mm:ss");
@@ -57,6 +68,13 @@ public class ExcelExporter
                 else if (site.Emails.Any() || site.Phones.Any())
                 {
                     worksheet.Cell(row, 9).Style.Font.FontColor = XLColor.Green;
+                }
+
+                // Увеличиваем высоту строки если много данных
+                var maxItems = Math.Max(site.Emails.Count, site.Phones.Count);
+                if (maxItems > 1)
+                {
+                    worksheet.Row(row).Height = Math.Min(15 * maxItems, 200); // Макс 200
                 }
 
                 row++;

@@ -177,6 +177,12 @@ public class ParserOrchestrator
 
             // Extract title
             siteData.Title = contactExtractor.ExtractTitle(mainDoc);
+            
+            // Если название подозрительное, используем домен
+            if (siteData.Title == "Без названия" || siteData.Title.Length < 3)
+            {
+                siteData.Title = GetDomain(url);
+            }
 
             // Get all pages to parse
             var urlsToParse = await webParser.GetInternalLinksAsync(url, depth, _config.Extractor);
