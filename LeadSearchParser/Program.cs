@@ -65,6 +65,51 @@ class Program
                 depth = options.Depth > 0 ? options.Depth : config.Search.DefaultDepth;
             }
 
+            // Override config with command line options
+            if (options.Delay > 0) config.Parser.Delay = options.Delay;
+            if (options.Timeout > 0) config.Parser.Timeout = options.Timeout;
+            if (options.Threads > 0) config.Parser.Threads = options.Threads;
+
+            // Check if URLs file is provided (direct URL parsing mode)
+            if (!string.IsNullOrWhiteSpace(options.UrlsFile))
+            {
+                if (File.Exists(options.UrlsFile))
+                {
+                    var urls = File.ReadAllLines(options.UrlsFile)
+                        .Where(line => !string.IsNullOrWhiteSpace(line) && line.Trim().StartsWith("http"))
+                        .Select(line => line.Trim())
+                        .ToList();
+
+                    if (urls.Any())
+                    {
+                        var orchestrator = new ParserOrchestrator(config, logger);
+                        var results = await orchestrator.RunFromUrlsAsync(urls, depth);
+
+                        if (results.Any())
+                        {
+                            var format = !string.IsNullOrWhiteSpace(options.Format) ? options.Format : config.Export.DefaultFormat;
+                            orchestrator.ExportResults(results, "direct_urls", options.OutputFile, format);
+                        }
+
+                        Console.WriteLine();
+                        logger.Success("Работа завершена успешно");
+                        if (config.Logging.Enabled)
+                        {
+                            logger.Info($"Лог: {Path.GetFullPath(logFile)}");
+                        }
+                        return 0;
+                    }
+                    else
+                    {
+                        logger.Warning($"Файл {options.UrlsFile} не содержит валидных URL");
+                    }
+                }
+                else
+                {
+                    logger.Warning($"Файл URLs не найден: {options.UrlsFile}");
+                }
+            }
+
             // Handle queries file
             var queries = new List<string>();
             if (!string.IsNullOrWhiteSpace(options.QueriesFile))
@@ -90,11 +135,6 @@ class Program
                 ConsoleHelper.WriteColor("Ошибка: нет запросов для обработки", ConsoleColor.Red);
                 return 1;
             }
-
-            // Override config with command line options
-            if (options.Delay > 0) config.Parser.Delay = options.Delay;
-            if (options.Timeout > 0) config.Parser.Timeout = options.Timeout;
-            if (options.Threads > 0) config.Parser.Threads = options.Threads;
 
             // Process each query
             foreach (var currentQuery in queries)
@@ -154,6 +194,10 @@ class Program
                     if (i + 1 < args.Length) options.QueriesFile = args[++i];
                     break;
 
+                case "--urls":
+                    if (i + 1 < args.Length) options.UrlsFile = args[++i];
+                    break;
+
                 case "-r":
                 case "--results":
                     if (i + 1 < args.Length && int.TryParse(args[++i], out var results))
@@ -183,6 +227,11 @@ class Program
 
                 case "--format":
                     if (i + 1 < args.Length) options.Format = args[++i];
+                    break;
+
+                case "--google":
+                    options.GoogleSheets = true;
+                    options.Format = "csv"; // Auto-set CSV format for Google Sheets
                     break;
 
                 case "--threads":
@@ -223,12 +272,14 @@ class Program
         Console.WriteLine("Параметры:");
         Console.WriteLine("  -q, --query <текст>          Поисковый запрос");
         Console.WriteLine("  -f, --queries <файл>         Файл с запросами (каждый запрос на новой строке)");
+        Console.WriteLine("  --urls <файл>                Файл с URL сайтов (прямой парсинг без поиска)");
         Console.WriteLine("  -r, --results <число>        Количество результатов поиска (по умолчанию: 30)");
         Console.WriteLine("  -d, --depth <число>          Глубина обхода сайта (по умолчанию: 2)");
         Console.WriteLine("  --delay <число>              Задержка между запросами в секундах (по умолчанию: 2)");
         Console.WriteLine("  --timeout <число>            Таймаут загрузки страницы в секундах (по умолчанию: 30)");
         Console.WriteLine("  -o, --output <файл>          Имя выходного файла");
         Console.WriteLine("  --format <xlsx|csv|json>     Формат вывода (по умолчанию: xlsx)");
+        Console.WriteLine("  --google                     Экспорт в CSV для Google Sheets (с инструкцией)");
         Console.WriteLine("  --threads <число>            Количество потоков (по умолчанию: 3)");
         Console.WriteLine("  --config <файл>              Файл конфигурации (по умолчанию: config.json)");
         Console.WriteLine("  --log <файл>                 Файл лога");
@@ -239,6 +290,8 @@ class Program
         Console.WriteLine("  LeadSearchParser.exe");
         Console.WriteLine("  LeadSearchParser.exe -q \"стеклянные перегородки\" -r 50");
         Console.WriteLine("  LeadSearchParser.exe -f queries.txt -o results.xlsx");
+        Console.WriteLine("  LeadSearchParser.exe --urls urls.txt -d 3");
+        Console.WriteLine("  LeadSearchParser.exe -q \"окна пвх\" --google  (для Google Sheets)");
     }
 }
 
@@ -246,12 +299,14 @@ class CommandLineOptions
 {
     public string? Query { get; set; }
     public string? QueriesFile { get; set; }
+    public string? UrlsFile { get; set; }
     public int Results { get; set; }
     public int Depth { get; set; }
     public int Delay { get; set; }
     public int Timeout { get; set; }
     public string? OutputFile { get; set; }
     public string? Format { get; set; }
+    public bool GoogleSheets { get; set; }
     public int Threads { get; set; }
     public string? ConfigFile { get; set; }
     public string? LogFile { get; set; }

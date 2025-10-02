@@ -27,6 +27,35 @@ public class ParserOrchestrator
         _exporter = new DataExporter();
     }
 
+    public async Task<List<SiteData>> RunFromUrlsAsync(List<string> urls, int depth)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        
+        _logger.Info($"Режим: Прямой парсинг URL");
+        _logger.Info($"Настройки: сайтов={urls.Count}, глубина={depth}, задержка={_config.Parser.Delay}сек");
+        Console.WriteLine();
+
+        _logger.Success($"Загружено URL: {urls.Count}");
+        Console.WriteLine();
+
+        // Parse sites
+        _logger.Info("Парсинг сайтов:");
+        Console.WriteLine();
+
+        var results = await ParseSitesAsync(urls, depth);
+
+        stopwatch.Stop();
+
+        // Display statistics
+        ConsoleHelper.WriteStatistics(
+            _processedCount, urls.Count, _totalEmails, _totalPhones,
+            _totalSocial, _successCount, _errorCount, stopwatch.Elapsed);
+
+        _logger.Success($"Парсинг завершен. Обработано: {_processedCount}/{urls.Count}");
+
+        return results.OrderBy(r => r.Number).ToList();
+    }
+
     public async Task<List<SiteData>> RunAsync(string query, int resultsCount, int depth)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -44,6 +73,8 @@ public class ParserOrchestrator
         if (!urls.Any())
         {
             _logger.Warning("Не найдено результатов поиска");
+            _logger.Info("РЕШЕНИЕ: Используйте файл urls.txt с прямыми ссылками на сайты");
+            _logger.Info("Пример: LeadSearchParser.exe --urls urls.txt");
             return new List<SiteData>();
         }
 
@@ -51,6 +82,22 @@ public class ParserOrchestrator
         _logger.Info("Парсинг сайтов:");
         Console.WriteLine();
 
+        var results = await ParseSitesAsync(urls, depth);
+
+        stopwatch.Stop();
+
+        // Display statistics
+        ConsoleHelper.WriteStatistics(
+            _processedCount, urls.Count, _totalEmails, _totalPhones,
+            _totalSocial, _successCount, _errorCount, stopwatch.Elapsed);
+
+        _logger.Success($"Парсинг завершен. Обработано: {_processedCount}/{urls.Count}");
+
+        return results.OrderBy(r => r.Number).ToList();
+    }
+
+    private async Task<List<SiteData>> ParseSitesAsync(List<string> urls, int depth)
+    {
         var results = new ConcurrentBag<SiteData>();
         var semaphore = new SemaphoreSlim(_config.Parser.Threads);
         var tasks = new List<Task>();
@@ -100,17 +147,8 @@ public class ParserOrchestrator
         }
 
         await Task.WhenAll(tasks);
-
-        stopwatch.Stop();
-
-        // Display statistics
-        ConsoleHelper.WriteStatistics(
-            _processedCount, urls.Count, _totalEmails, _totalPhones,
-            _totalSocial, _successCount, _errorCount, stopwatch.Elapsed);
-
-        _logger.Success($"Парсинг завершен. Обработано: {_processedCount}/{urls.Count}");
-
-        return results.OrderBy(r => r.Number).ToList();
+        
+        return results.ToList();
     }
 
     private async Task<SiteData> ParseSiteAsync(string url, int number, int depth)
@@ -237,6 +275,13 @@ public class ParserOrchestrator
         
         Console.WriteLine();
         _logger.Info($"Файл результатов: {Path.GetFullPath(outputFile)}");
+
+        // Show Google Sheets instructions for CSV export
+        if (format.ToLower() == "csv")
+        {
+            var googleHelper = new Export.GoogleSheetsHelper();
+            Console.WriteLine(googleHelper.GetImportInstructions(outputFile));
+        }
     }
 }
 

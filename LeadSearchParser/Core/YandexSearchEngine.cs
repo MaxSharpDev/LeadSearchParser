@@ -16,7 +16,8 @@ public class YandexSearchEngine
         var handler = new HttpClientHandler
         {
             AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            UseCookies = true
         };
 
         _httpClient = new HttpClient(handler)
@@ -25,8 +26,12 @@ public class YandexSearchEngine
         };
         
         _httpClient.DefaultRequestHeaders.Add("User-Agent", _userAgent);
-        _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-        _httpClient.DefaultRequestHeaders.Add("Accept-Language", "ru-RU,ru;q=0.9");
+        _httpClient.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+        _httpClient.DefaultRequestHeaders.Add("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
+        _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+        _httpClient.DefaultRequestHeaders.Add("DNT", "1");
+        _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        _httpClient.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
     }
 
     public async Task<List<string>> SearchAsync(string query, int resultsCount)
@@ -59,14 +64,14 @@ public class YandexSearchEngine
 
         try
         {
-            var searchUrl = $"https://yandex.ru/search/?text={Uri.EscapeDataString(query)}&p={page}";
+            var searchUrl = $"https://yandex.ru/search/?text={Uri.EscapeDataString(query)}&p={page}&lr=213";
             var html = await _httpClient.GetStringAsync(searchUrl);
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            // Yandex search result selectors (these may need adjustment)
-            var resultNodes = doc.DocumentNode.SelectNodes("//li[contains(@class, 'serp-item')]//a[contains(@class, 'Link') and @href]");
+            // Try multiple selectors aggressively
+            var resultNodes = doc.DocumentNode.SelectNodes("//a[@href and not(ancestor::header) and not(ancestor::footer)]");
             
             if (resultNodes != null)
             {
@@ -76,54 +81,13 @@ public class YandexSearchEngine
                     if (string.IsNullOrWhiteSpace(href))
                         continue;
 
-                    // Extract actual URL (Yandex may use redirects)
+                    // Extract actual URL
                     var actualUrl = ExtractActualUrl(href);
                     if (!string.IsNullOrWhiteSpace(actualUrl) && IsValidResultUrl(actualUrl))
                     {
                         urls.Add(actualUrl);
-                    }
-                }
-            }
-
-            // Alternative selector if the above doesn't work
-            if (!urls.Any())
-            {
-                resultNodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'organic')]//a[@href]");
-                if (resultNodes != null)
-                {
-                    foreach (var node in resultNodes)
-                    {
-                        var href = node.GetAttributeValue("href", "");
-                        if (string.IsNullOrWhiteSpace(href))
-                            continue;
-
-                        var actualUrl = ExtractActualUrl(href);
-                        if (!string.IsNullOrWhiteSpace(actualUrl) && IsValidResultUrl(actualUrl))
-                        {
-                            urls.Add(actualUrl);
-                            if (urls.Count >= 10)
-                                break;
-                        }
-                    }
-                }
-            }
-
-            // Try one more alternative selector
-            if (!urls.Any())
-            {
-                resultNodes = doc.DocumentNode.SelectNodes("//h2/a[@href]");
-                if (resultNodes != null)
-                {
-                    foreach (var node in resultNodes)
-                    {
-                        var href = node.GetAttributeValue("href", "");
-                        var actualUrl = ExtractActualUrl(href);
-                        if (!string.IsNullOrWhiteSpace(actualUrl) && IsValidResultUrl(actualUrl))
-                        {
-                            urls.Add(actualUrl);
-                            if (urls.Count >= 10)
-                                break;
-                        }
+                        if (urls.Count >= 20) // Collect more than needed, will filter later
+                            break;
                     }
                 }
             }
@@ -143,22 +107,26 @@ public class YandexSearchEngine
 
         try
         {
+            // Clean the URL
+            href = href.Trim();
+
             // If it's already a direct URL
             if (href.StartsWith("http://") || href.StartsWith("https://"))
             {
-                // Check if it's a Yandex redirect
-                if (href.Contains("yandex.ru/clck") || href.Contains("yandex.ru/search"))
+                // Check if it's a Yandex redirect or internal link
+                if (href.Contains("yandex."))
                 {
-                    // Try to extract the actual URL from query parameters
-                    var uri = new Uri(href);
-                    var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-                    var url = query["url"] ?? query["text"];
-                    if (!string.IsNullOrWhiteSpace(url))
-                    {
-                        return url;
-                    }
+                    return string.Empty; // Skip Yandex internal links
                 }
-                else
+                
+                return href;
+            }
+            
+            // If it's a protocol-relative URL
+            if (href.StartsWith("//"))
+            {
+                href = "https:" + href;
+                if (!href.Contains("yandex."))
                 {
                     return href;
                 }
