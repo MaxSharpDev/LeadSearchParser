@@ -37,7 +37,7 @@
   },
   "export": {
     "defaultFormat": "xlsx",
-    "outputFolder": "D:\\LeadSearchParser\\CSV",
+    "outputFolder": "CSV",
     "filenameTemplate": "results_{date}_{query}"
   },
   "logging": {
