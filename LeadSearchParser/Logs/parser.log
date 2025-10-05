@@ -1,0 +1,27 @@
+﻿[2025-10-05 19:06:22] [INFO] LeadSearchParser v1.0 запущен
+[2025-10-05 19:06:22] [INFO] Рабочая директория: C:\Users\PopovKA\Desktop\MaxProject\LeadSearchParser\LeadSearchParser
+[2025-10-05 19:06:22] [INFO] Запрос: "СЃС‚РµРєР»СЏРЅРЅС‹Рµ РїРµСЂРµРіРѕСЂРѕРґРєРё"
+[2025-10-05 19:06:22] [INFO] Настройки: результатов=5, глубина=2, задержка=2сек
+[2025-10-05 19:06:22] [INFO] Поиск в Яндексе...
+[2025-10-05 19:06:24] [SUCCESS] Найдено URL: 5
+[2025-10-05 19:06:24] [INFO] Парсинг сайтов:
+[2025-10-05 19:06:31] [SUCCESS] Парсинг завершен. Обработано: 5/5
+[2025-10-05 19:06:31] [INFO] Экспорт в Results\results_05102025_190631_СЃС‚РµРєР»СЏРЅРЅС‹Рµ РїРµСЂРµРіРѕСЂРѕРґРєРё.xlsx...
+[2025-10-05 19:06:32] [SUCCESS] Готово! Сохранено записей: 3
+[2025-10-05 19:06:32] [INFO] Файл результатов: C:\Users\PopovKA\Desktop\MaxProject\LeadSearchParser\LeadSearchParser\Results\results_05102025_190631_СЃС‚РµРєР»СЏРЅРЅС‹Рµ РїРµСЂРµРіРѕСЂРѕРґРєРё.xlsx
+[2025-10-05 19:06:32] [SUCCESS] Работа завершена успешно
+[2025-10-05 19:06:32] [INFO] Лог: C:\Users\PopovKA\Desktop\MaxProject\LeadSearchParser\LeadSearchParser\Logs\parser.log
+[2025-10-05 19:06:37] [INFO] LeadSearchParser v1.0 запущен
+[2025-10-05 19:06:37] [INFO] Рабочая директория: C:\Users\PopovKA\Desktop\MaxProject\LeadSearchParser\LeadSearchParser
+[2025-10-05 19:06:37] [INFO] Режим: Google Search
+[2025-10-05 19:06:37] [INFO] Запрос: "РѕРєРЅР° РџР’РҐ"
+[2025-10-05 19:06:37] [INFO] Настройки: результатов=3, глубина=2, задержка=2сек
+[2025-10-05 19:06:37] [INFO] Поиск в Google...
+[2025-10-05 19:06:39] [SUCCESS] Найдено URL: 3
+[2025-10-05 19:06:39] [INFO] Парсинг сайтов:
+[2025-10-05 19:06:44] [SUCCESS] Парсинг завершен. Обработано: 3/3
+[2025-10-05 19:06:44] [INFO] Экспорт в Results\results_05102025_190644_РѕРєРЅР° РџР’РҐ.xlsx...
+[2025-10-05 19:06:44] [SUCCESS] Готово! Сохранено записей: 3
+[2025-10-05 19:06:44] [INFO] Файл результатов: C:\Users\PopovKA\Desktop\MaxProject\LeadSearchParser\LeadSearchParser\Results\results_05102025_190644_РѕРєРЅР° РџР’РҐ.xlsx
+[2025-10-05 19:06:44] [SUCCESS] Работа завершена успешно
+[2025-10-05 19:06:44] [INFO] Лог: C:\Users\PopovKA\Desktop\MaxProject\LeadSearchParser\LeadSearchParser\Logs\parser.log

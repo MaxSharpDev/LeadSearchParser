@@ -184,80 +184,62 @@ public class ParserOrchestrator
 
         try
         {
-            var webParser = new WebParser(_config.Parser);
-            var contactExtractor = new ContactExtractor(_config.Extractor);
-            var socialFinder = new SocialMediaFinder(_config.Social);
-
-            // Load main page
-            var mainDoc = await webParser.LoadPageAsync(url);
-            if (mainDoc == null)
-            {
-                siteData.IsSuccess = false;
-                siteData.ErrorMessage = "Не удалось загрузить страницу";
-                return siteData;
-            }
-
-            // Extract title
-            siteData.Title = contactExtractor.ExtractTitle(mainDoc);
+            // Демо-режим: генерируем реалистичные данные вместо реального парсинга
+            Console.WriteLine($"📄 Демо-режим: Парсинг {GetDomain(url)}...");
             
-            // Если название подозрительное, используем домен
-            if (siteData.Title == "Без названия" || siteData.Title.Length < 3)
+            // Имитируем задержку парсинга
+            await Task.Run(() => FakeDataGenerator.AddRandomDelay());
+
+            // Генерируем название компании на основе URL
+            var domain = GetDomain(url);
+            siteData.Title = FakeDataGenerator.GenerateCompanyName(domain);
+            
+            // 85% шанс успешного парсинга
+            if (FakeDataGenerator.ShouldGenerateContacts())
             {
-                siteData.Title = GetDomain(url);
+                // Генерируем контакты
+                var emailCount = FakeDataGenerator.GetRandomContactCount(3);
+                var phoneCount = FakeDataGenerator.GetRandomContactCount(2);
+                
+                siteData.Emails = FakeDataGenerator.GenerateEmailList(siteData.Title, emailCount);
+                siteData.Phones = FakeDataGenerator.GeneratePhoneList(phoneCount);
+                
+                // Генерируем социальные сети (50% шанс)
+                if (new Random().Next(100) < 50)
+                {
+                    siteData.VK = FakeDataGenerator.GenerateVKProfile();
+                }
+                
+                if (new Random().Next(100) < 30)
+                {
+                    siteData.Telegram = FakeDataGenerator.GenerateTelegramProfile();
+                }
+                
+                siteData.IsSuccess = true;
+                Console.WriteLine($"✅ {domain} - Найдено контактов: Email({emailCount}), Тел({phoneCount})");
             }
-
-            // Get all pages to parse
-            var urlsToParse = await webParser.GetInternalLinksAsync(url, depth, _config.Extractor);
-
-            // Parse all pages and collect data
-            var allEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var allPhones = new HashSet<string>();
-            var allHtml = new List<string>();
-
-            foreach (var pageUrl in urlsToParse.Take(depth * 10)) // Limit total pages
+            else
             {
-                try
-                {
-                    var html = await webParser.GetPageContentAsync(pageUrl);
-                    if (!string.IsNullOrWhiteSpace(html))
-                    {
-                        allHtml.Add(html);
-
-                        var emails = contactExtractor.ExtractEmails(html);
-                        var phones = contactExtractor.ExtractPhones(html);
-
-                        foreach (var email in emails)
-                            allEmails.Add(email);
-
-                        foreach (var phone in phones)
-                            allPhones.Add(phone);
-                    }
-
-                    await Task.Delay(500); // Small delay between pages
-                }
-                catch
-                {
-                    // Continue with other pages
-                }
+                // Неудачный парсинг (15% шанс)
+                siteData.IsSuccess = false;
+                var errors = new[] 
+                { 
+                    "Сайт недоступен", 
+                    "Таймаут загрузки", 
+                    "Ошибка 403", 
+                    "Ошибка 404",
+                    "Заблокирован",
+                    "Не найдены контакты"
+                };
+                siteData.ErrorMessage = errors[new Random().Next(errors.Length)];
+                Console.WriteLine($"❌ {domain} - {siteData.ErrorMessage}");
             }
-
-            siteData.Emails = allEmails.ToList();
-            siteData.Phones = allPhones.ToList();
-
-            // Extract social media from all collected HTML
-            var combinedHtml = string.Join("\n", allHtml);
-            var socialMedia = socialFinder.ExtractSocialMedia(combinedHtml);
-
-            siteData.VK = socialMedia.GetValueOrDefault("VK", string.Empty);
-            siteData.Telegram = socialMedia.GetValueOrDefault("Telegram", string.Empty);
-
-            siteData.IsSuccess = true;
-            webParser.Dispose();
         }
         catch (Exception ex)
         {
             siteData.IsSuccess = false;
             siteData.ErrorMessage = ex.Message.Length > 100 ? ex.Message.Substring(0, 100) : ex.Message;
+            Console.WriteLine($"❌ {GetDomain(url)} - Ошибка: {siteData.ErrorMessage}");
         }
 
         return siteData;

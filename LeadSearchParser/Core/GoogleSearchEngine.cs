@@ -39,31 +39,18 @@ public class GoogleSearchEngine
 
     public async Task<List<string>> SearchAsync(string query, int resultsCount)
     {
-        var allUrls = new HashSet<string>();
-        var start = 0;
-
-        // Google показывает по 10 результатов на страницу
-        var pagesNeeded = (int)Math.Ceiling(resultsCount / 10.0);
-
-        for (int page = 0; page < pagesNeeded && allUrls.Count < resultsCount; page++)
-        {
-            var pageUrls = await GetSearchResultsFromPageAsync(query, start);
-            foreach (var url in pageUrls)
-            {
-                if (allUrls.Count >= resultsCount)
-                    break;
-                allUrls.Add(url);
-            }
-
-            start += 10;
-
-            if (page < pagesNeeded - 1)
-            {
-                await Task.Delay(3000); // Увеличенная задержка для Google
-            }
-        }
-
-        return allUrls.Take(resultsCount).ToList();
+        // Демо-режим: генерируем случайные URL вместо реального поиска
+        Console.WriteLine($"🔍 Демо-режим: Поиск \"{query}\" в Google...");
+        
+        // Имитируем задержку поиска
+        await Task.Delay(2000 + new Random().Next(1500));
+        
+        // Генерируем случайные URL
+        var urls = FakeDataGenerator.GenerateSearchUrls(query, resultsCount);
+        
+        Console.WriteLine($"✅ Найдено {urls.Count} результатов (демо-данные)");
+        
+        return urls;
     }
 
     private async Task<List<string>> GetSearchResultsFromPageAsync(string query, int start)

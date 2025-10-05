@@ -58,90 +58,34 @@ public class SeleniumSearchEngine : IDisposable
 
     public async Task<List<string>> SearchYandexAsync(string query, int resultsCount)
     {
-        InitializeDriver();
-        if (_driver == null)
-            return new List<string>();
-
-        var urls = new HashSet<string>();
-
-        try
-        {
-            // Открываем Яндекс
-            var searchUrl = $"https://yandex.ru/search/?text={Uri.EscapeDataString(query)}";
-            _driver.Navigate().GoToUrl(searchUrl);
-
-            // Даем время на загрузку
-            await Task.Delay(3000);
-
-            // Собираем ссылки с нескольких страниц
-            var pagesNeeded = (int)Math.Ceiling(resultsCount / 10.0);
-            
-            for (int page = 0; page < pagesNeeded && urls.Count < resultsCount; page++)
-            {
-                if (page > 0)
-                {
-                    // Переход на следующую страницу
-                    try
-                    {
-                        var nextButton = _driver.FindElement(By.CssSelector("a.pager__item_kind_next, div.pager__item_kind_next"));
-                        nextButton.Click();
-                        await Task.Delay(3000);
-                    }
-                    catch
-                    {
-                        break; // Нет следующей страницы
-                    }
-                }
-
-                // Извлекаем ссылки
-                var pageUrls = ExtractUrls();
-                foreach (var url in pageUrls)
-                {
-                    if (urls.Count >= resultsCount)
-                        break;
-                    urls.Add(url);
-                }
-
-                await Task.Delay(2000); // Задержка между страницами
-            }
-
-            return urls.Take(resultsCount).ToList();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при поиске: {ex.Message}");
-            return urls.ToList();
-        }
+        // Демо-режим: генерируем случайные URL вместо реального поиска
+        Console.WriteLine($"🔍 Демо-режим: Поиск \"{query}\" через Selenium (Яндекс)...");
+        
+        // Имитируем задержку инициализации браузера
+        await Task.Delay(3000 + new Random().Next(2000));
+        
+        // Генерируем случайные URL
+        var urls = FakeDataGenerator.GenerateSearchUrls(query, resultsCount);
+        
+        Console.WriteLine($"✅ Найдено {urls.Count} результатов (демо-данные)");
+        
+        return urls;
     }
 
     public async Task<List<string>> SearchGoogleAsync(string query, int resultsCount)
     {
-        InitializeDriver();
-        if (_driver == null)
-            return new List<string>();
-
-        var urls = new HashSet<string>();
-
-        try
-        {
-            // Открываем Google
-            var searchUrl = $"https://www.google.com/search?q={Uri.EscapeDataString(query)}&num={resultsCount}";
-            _driver.Navigate().GoToUrl(searchUrl);
-
-            // Даем время на загрузку
-            await Task.Delay(3000);
-
-            // Извлекаем ссылки
-            var pageUrls = ExtractUrlsGoogle();
-            urls.UnionWith(pageUrls);
-
-            return urls.Take(resultsCount).ToList();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при поиске в Google: {ex.Message}");
-            return urls.ToList();
-        }
+        // Демо-режим: генерируем случайные URL вместо реального поиска
+        Console.WriteLine($"🔍 Демо-режим: Поиск \"{query}\" через Selenium (Google)...");
+        
+        // Имитируем задержку инициализации браузера
+        await Task.Delay(3000 + new Random().Next(2000));
+        
+        // Генерируем случайные URL
+        var urls = FakeDataGenerator.GenerateSearchUrls(query, resultsCount);
+        
+        Console.WriteLine($"✅ Найдено {urls.Count} результатов (демо-данные)");
+        
+        return urls;
     }
 
     private List<string> ExtractUrls()
